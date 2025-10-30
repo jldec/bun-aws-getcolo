@@ -1,4 +1,6 @@
 # bun-aws-getcolo
+<img width="2260" height="1116" alt="Screenshot 2025-10-30 at 19 17 29" src="https://github.com/user-attachments/assets/6dba61b2-4d59-4720-87f1-a61f7babe6d1" />
+
 This repo provides aws configuration and a bun script deployed to several EC2 t4g.nano instances in different regions. (see [aws-ec2.md](aws-ec2.md))
 
 The goal was to test whether HTTP requests to a shared cloudflare tunnel will automatically select the closest origin. Wording in the [documentation](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/get-started/tunnel-useful-terms/#replica) suggests that there may be different strategies for how the "replica" is selected.
@@ -10,7 +12,7 @@ Experiments confirm that in some environments the choice of origin varies (rando
 ## How it works
 This experiment depends on Cloudflare workers anycast routing. A [getcolo](https://github.com/jldec/getcolo) worker deployed to https://getcolo.jldec.me/ simply returns the colo name (and other region info) from the datacenter where it is running.
 
-The bun script running on each of the EC2 instances calls getcolo, either directly, or via one of the other regional instances, and returning colo details and timing info.
+The bun script running on each of the EC2 instances calls getcolo, either directly, or via one of the other regional instances, returning colo details and timing info.
 
 Each instance is also running 2 cloudflared tunnels
 
@@ -90,5 +92,7 @@ The scripts and commands used are documented in [aws-ec2.md](aws-ec2.md).
 
 #### References
 - https://grok.com/share/bGVnYWN5_513887d6-f932-4154-ab33-248f40127ef5
-- https://grok.com/c/704021f4-c1e1-490d-9f4a-74b966d996dd
+- https://grok.com/share/bGVnYWN5_2172f841-64f2-4458-a310-123a5a3633f1
+- https://grok.com/share/bGVnYWN5_2adbfd96-89c8-4573-a06c-eb20ee773c92
+- https://grok.com/share/bGVnYWN5_688a7794-99a9-4bbf-8708-66f57d8f68c2
 
