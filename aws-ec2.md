@@ -21,7 +21,7 @@ ssh -i $EC2_KEY $EC2_USER@$EC2_HOST "sudo systemctl restart bun.service"
 
 ## dublin
 export EC2_USER=ec2-user
-export EC2_HOST=ec2-54-74-233-158.eu-west-1.compute.amazonaws.com
+export EC2_HOST=ec2-52-18-170-250.eu-west-1.compute.amazonaws.com
 export EC2_KEY=~/.ssh/jldec-aws-eu.pem
 
 scp -i $EC2_KEY index.ts $EC2_USER@$EC2_HOST:/opt/bun/index.ts
@@ -117,6 +117,7 @@ sudo systemctl stop cloudflared.service
 sudo systemctl disable cloudflared.service
 sudo cloudflared service uninstall
 sudo systemctl daemon-reload
+sudo journalctl -u cloudflared.service -f
 ```
 
 ### to remove cloudflared-geo service

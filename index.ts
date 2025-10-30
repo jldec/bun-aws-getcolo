@@ -1,51 +1,43 @@
 #!/usr/bin/env bun
 
 const PORT = 8000
-
-const urls: Record<string, string> = {
-  // getcolo worker
-  colo: 'https://getcolo.jldec.me/colo',
-  // shared tunnel
-  geo: 'https://geo.jldec.me/colo',
-  // region-specific tunnels
-  'us-east-1': 'https://us-east-1.jldec.me/colo',
-  'us-west-1': 'https://us-west-1.jldec.me/colo',
-  dublin: 'https://dublin.jldec.me/colo',
-  singapore: 'https://singapore.jldec.me/colo',
-  tokyo: 'https://tokyo.jldec.me/colo'
-}
-
 type Colo = Record<string, string | number>
 
 /**
- * Pings url to get colo info
+ * GET colo JSON  with timing from `https://${name}.jldec.me/getcolo`
+ * @param name - subdomain of jldec.me to query
  */
-async function getColo(urlName: string) {
-  const url = urls[urlName]
-  if (!url) throw new Error(`Unknown urlName: ${urlName}`)
+async function getColo(name: string): Promise<Response> {
+  // Check for valid DNS hostname (RFC 1123, no dots, 1-63 chars, alphanum or hyphen, not start/end with hyphen)
+  if (!/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$/.test(name)) {
+    console.error(`400 Invalid DNS hostname: ${name}`)
+    return new Response(`Invalid DNS hostname: ${name}`, { status: 400 })
+  }
+  const url = `https://${name}.jldec.me/getcolo`
   const start = Date.now()
   const resp = await fetch(url)
-  const colo: Colo = resp.ok ? ((await resp.json()) as Colo) : { status: resp.status }
-  colo[urlName] = url
-  colo[urlName + 'FetchTime'] = Date.now() - start
-  return colo
+  if (!resp.ok) {
+    console.error(`${resp.status} ${resp.statusText} error fetching ${url}`)
+    return new Response(`${resp.statusText} error fetching ${url}`, { status: resp.status })
+  }
+  const colo: Colo = await resp.json() as Colo
+  colo[name] = url
+  colo[name + 'FetchTime'] = Date.now() - start
+  return Response.json(colo)
 }
 
 Bun.serve({
   port: PORT,
   async fetch(req) {
     const url = new URL(req.url)
-    console.log(req.method, url.toString())
-
+    const pathname = url.pathname
+    console.log(req.method, pathname)
     try {
-      if (url.pathname === '/') return new Response(`Hello from ${url.origin}`)
-      for (const [key, value] of Object.entries(urls)) {
-        if (url.pathname === `/${key}`) return Response.json(await getColo(key))
-      }
-      return new Response('Not found', { status: 404 })
+      if (pathname === '/') return new Response(`Hello from ${url.origin}`)
+      return await getColo(pathname.slice(1))
     } catch (e: any) {
-      console.error(`Bun error on ${url}`, e)
-      return new Response(`Bun error: ${e.message}`, { status: 502 })
+      console.error(`502 Internal error fetching ${req.url}`, e)
+      return new Response(`Internal error fetching ${req.url}: ${e.message}`, { status: 502 })
     }
   }
 })
