@@ -1,6 +1,17 @@
 # aws-ec2
+Manual instructions for deploying aws instances in different regions.
 
-## env vars
+### in AWS console
+1. Select region
+2. Launch instance, enter dns-able name e.g. 'dublin' or 'us-east-1'
+3. Select architecture `64 bit (Arm)` with default Amazon Linux AMI 
+4. Select instance type `t4g.nano` (graviton, 1/2 GB RAM)
+5. Save new ssh keypair to `~/.ssh` and `chmod 400`
+6. 
+
+### env vars for ssh
+Run the whole script below from this repo directory to update index.ts on all hosts.  
+After restarting hosts will have a new IP, so update the respective EC2_HOST below.
 ```sh
 
 ## us-east-1e
@@ -42,41 +53,55 @@ export EC2_KEY=~/.ssh/jldec-aws-tokyo.pem
 
 scp -i $EC2_KEY index.ts $EC2_USER@$EC2_HOST:/opt/bun/index.ts
 ssh -i $EC2_KEY $EC2_USER@$EC2_HOST "sudo systemctl restart bun.service"
-
 ```
 
-# ssh
+### ssh
 ```sh
 ssh -i $EC2_KEY $EC2_USER@$EC2_HOST
 ```
 
-## ghostty
-https://grok.com/c/1bb55311-a732-4e6c-9630-829efa8728b6
+### ghostty
+https://grok.com/share/bGVnYWN5_9973b0e0-a223-40a8-b316-05a8c63fc3ee
 
 ```sh
 # fix terminfo
 infocmp -x xterm-ghostty | ssh -i $EC2_KEY $EC2_USER@$EC2_HOST -- tic -x -
 ```
 
-## list services
+### list services
 ```sh
 sudo systemctl list-units --type=service --state=running
 ```
 
-## tunnels
-https://one.dash.cloudflare.com/a0b19134b3f8f7aaae377202538aafe3/networks/tunnels
-https://grok.com/c/a11fad2f-df5f-4ac0-b4fa-57b87d84274d
+### cloudflare tunnels
+https://one.dash.cloudflare.com/a0b19134b3f8f7aaae377202538aafe3/networks/tunnels  
+https://grok.com/share/bGVnYWN5_96d9723a-2ed0-4601-b368-6c260af083c7
 
+### install cloudflared service
 ```sh
 # install cloudflared on aws linux (dnf ~= yum)
 curl -fsSL https://pkg.cloudflare.com/cloudflared-ascii.repo | sudo tee /etc/yum.repos.d/cloudflared.repo
 sudo dnf check-update
 sudo dnf install -y cloudflared
-# now install the geo tunnel using the region-specific token from cloudflare dashboard
+
+# now install the tunnel using the region-specific token from the cloudflare dashboard
 # sudo cloudflared service install <token...>
+
+# to tail logs
+sudo journalctl -u cloudflared.service -f
+
+# to remove
+sudo systemctl stop cloudflared.service
+sudo systemctl disable cloudflared.service
+sudo cloudflared service uninstall
+sudo systemctl daemon-reload
 ```
 
-## 2nd geo-routed (shared) tunnel - fix token below using geo tunnel token
+### install 2nd shared tunnel (geo-routed?)
+Add a new `cloudflared-geo` sysmtemd service unit in `/etc/systemd/system/`.
+No need for update chron since that's alread installed.
+> [!NOTE]
+> fix tunnel run `<token>` below using geo tunnel token from cloudflare dashboard
 ```sh
 sudo tee /etc/systemd/system/cloudflared-geo.service > /dev/null <<'EOF'
 [Unit]
@@ -95,40 +120,26 @@ RestartSec=5s
 WantedBy=multi-user.target
 EOF
 
-# Reload systemd
+# reload systemd
 sudo systemctl daemon-reload
 
-# Enable on boot
+# enable on boot
 sudo systemctl enable cloudflared-geo.service
 
-# Start now
+# start now
 sudo systemctl start cloudflared-geo.service
 
-# Check status
-sudo systemctl status cloudflared-geo.service
-
-# View logs
+# tail logs
 sudo journalctl -u cloudflared-geo.service -f
-```
 
-### to remove cloudflared service
-```sh
-sudo systemctl stop cloudflared.service
-sudo systemctl disable cloudflared.service
-sudo cloudflared service uninstall
-sudo systemctl daemon-reload
-sudo journalctl -u cloudflared.service -f
-```
-
-### to remove cloudflared-geo service
-```sh
+# to remove
 sudo systemctl stop cloudflared-geo.service
 sudo systemctl disable cloudflared-geo.service
 sudo rm /etc/systemd/system/cloudflared-geo.service
 sudo systemctl daemon-reload
 ```
 
-## bun
+### install bun
 https://grok.com/c/1f58ae3b-5e22-405b-a038-8d1d9d207c3a
 
 ```sh
