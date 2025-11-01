@@ -4,25 +4,27 @@ const PORT = 8000
 type Colo = Record<string, string | number>
 
 /**
- * GET colo JSON  with timing from `https://${name}.jldec.me/getcolo`
- * @param name - subdomain of jldec.me to query
+ * GET colo JSON  with timing from `https://${coloName}.jldec.me/getcolo`
+ * @param coloName - subdomain of jldec.me to query
  */
-async function getColo(name: string): Promise<Response> {
-  // Check for valid DNS hostname (RFC 1123, no dots, 1-63 chars, alphanum or hyphen, not start/end with hyphen)
-  if (!/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$/.test(name)) {
-    console.error(`400 Invalid DNS hostname: ${name}`)
-    return new Response(`Invalid DNS hostname: ${name}`, { status: 400 })
-  }
-  const url = `https://${name}.jldec.me/getcolo`
+async function getColo(coloName: string): Promise<Response> {
+  const url = `https://${coloName}.jldec.me/getcolo`
   const start = Date.now()
-  const resp = await fetch(url)
-  if (!resp.ok) {
-    console.error(`${resp.status} ${resp.statusText} error fetching ${url}`)
-    return new Response(`${resp.statusText} error fetching ${url}`, { status: resp.status })
+  let resp: Response | undefined
+  try {
+    resp = await fetch(url)
+  } catch (e) {
+    throw new Error(`Error fetching ${url}: ${e}`)
   }
-  const colo: Colo = await resp.json() as Colo
-  colo[name] = url
-  colo[name + 'FetchTime'] = Date.now() - start
+  if (!resp.ok) throw new Error(`Status ${resp.status} fetching ${url}`)
+  let colo: Colo
+  try {
+    colo = (await resp.json()) as Colo
+  } catch (e) {
+    throw new Error(`Error parsing JSON from ${url}: ${e}`)
+  }
+  colo[coloName] = url
+  colo[coloName + 'FetchTime'] = Date.now() - start
   return Response.json(colo)
 }
 
@@ -31,13 +33,17 @@ Bun.serve({
   async fetch(req) {
     const url = new URL(req.url)
     const pathname = url.pathname
-    console.log(req.method, pathname)
+    const coloName = pathname.slice(1)
+    console.log(req.method, req.url)
     try {
       if (pathname === '/') return new Response(`Hello from ${url.origin}`)
-      return await getColo(pathname.slice(1))
+      // Check if valid DNS hostname (RFC 1123, no dots, 1-63 chars, alphanum or hyphen, not start/end with hyphen)
+      // This also catches requests for favicon etc.
+      if (!/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$/.test(coloName)) throw new Error(`Invalid colo hostname ${coloName}`)
+      return await getColo(coloName)
     } catch (e: any) {
-      console.error(`502 Internal error fetching ${req.url}`, e)
-      return new Response(`Internal error fetching ${req.url}: ${e.message}`, { status: 502 })
+      console.error(`404 ${e.message}`)
+      return new Response('not found', { status: 404 })
     }
   }
 })
