@@ -51,7 +51,7 @@ https://dublin-1.jldec.me/geo - geo targeting is not predictable
 }
 ```
 
-https://tokyo.jldec.me/geo - In other locations geo targeting behaves more predictably (sometimes)
+https://tokyo-1.jldec.me/geo - In other locations geo targeting behaves more predictably (sometimes)
 ```json
 {
   "colo": "NRT",
