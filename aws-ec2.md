@@ -17,34 +17,37 @@ Sharing the same subnets for both ipv4 and ipv6, makes it easy to start with an 
 - Select the keypair as configured earlier.
 - Edit network settings to select a subnet and auto-assign public ipv4 and ipv6 addresses.
 - Create a new security group with ssh inbound ipv4 access enabled.
-- Select 'Spot instances' purchasing option under advanced details.
+- Under advanced details select the 'Spot instances' purchasing option, with 'Persistent' request type, and 'Stop' interruption behavior.
 
-### Configure ssh access
+### Configure a new ssh host
+Example from .ssh/config
 ```sh
-export EC2_USER=ec2-user
-export EC2_HOST=<instance-IP-DNS-name> # e.g. ec2-54-195-55-119.eu-west-1.compute.amazonaws.com
-export EC2_KEY=~/.ssh/jldec-aws-eu.pem
+Host useast-2
+    HostName ec2-3-145-49-221.us-east-2.compute.amazonaws.com
+    User ec2-user
+    IdentityFile ~/.ssh/jldec-aws-eu.pem
 ```
 
 ### Test ssh
 ```sh
-ssh -i $EC2_KEY $EC2_USER@$EC2_HOST
+ssh useast-2
 ```
 
 ### Push xterm-ghostty terminfo
-https://grok.com/share/bGVnYWN5_9973b0e0-a223-40a8-b316-05a8c63fc3ee
+If you use ghostty, configure terminfo on the host
 
 ```sh
-infocmp -x xterm-ghostty | ssh -i $EC2_KEY $EC2_USER@$EC2_HOST -- tic -x -
+infocmp -x xterm-ghostty | ssh useast-2 -- tic -x -
 ```
+
 ### Create new tunnel
-Create a new instance-specific tunnel in the Cloudflare dashboard. The steps below are copied from the instructions for the "Red Hat" OS environment in the dashboard
+Create a new instance-specific tunnel in the Cloudflare dashboard. The steps below are copied from the instructions for the 'Red Hat' OS environment in the dashboard
 
 ```sh
 # install cloudflared
 curl -fsSl https://pkg.cloudflare.com/cloudflared.repo | sudo tee /etc/yum.repos.d/cloudflared.repo
-sudo yum update
-sudo yum install cloudflared
+sudo yum update -y
+sudo yum install -y cloudflared
 ```
 
 ```sh
@@ -137,8 +140,8 @@ cd /opt/bun
 
 ```sh
 # install as service after copying index.ts
-scp -i $EC2_KEY index.ts $EC2_USER@$EC2_HOST:/opt/bun/index.ts
-ssh -i $EC2_KEY $EC2_USER@$EC2_HOST "chmod +x /opt/bun/index.ts"
+scp index.ts useast-2:/opt/bun/index.ts
+ssh useast-2 "chmod +x /opt/bun/index.ts"
 ```
 
 ```sh
@@ -184,7 +187,7 @@ sudo systemctl restart bun.service
 Your browser should now show something like `Hello from http://tokyo-1.jldec.me`.
 
 ### Turn off ipv4
-Look for the toggle to turn off "Auto-assign public IP" in the "Manage IP addresses" action.
+Look for the toggle to turn off 'Auto-assign public IP' in the 'Manage IP addresses' action.
 Make a note of the ipv6 address for the instance.
 
 ### Add ipv6 CIDR route for the tunnel
@@ -195,10 +198,4 @@ Add the same address as a CIDR range to your WARP profile's split tunnel config 
 This will make the ipv6 address reachable from devices running WARP.
 
 ## add ipv6 Host to .ssh/config
-Finally add the ipv6 as a hostname to your .ssh/config file. E.g. to enable `ssh dublin-2`:
-```
-Host dublin-2
-    HostName 1234:abcd:1234:abcd:1234:abcd:1234:abcd
-    User ec2-user
-    IdentityFile ~/.ssh/aws-keypair.pem
-```
+Finally replace the ipv4 hostname in your .ssh/config file with the ipv6 address, and make sure ssh works.
