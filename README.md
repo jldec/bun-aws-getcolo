@@ -1,6 +1,4 @@
 # bun-aws-getcolo
-<img width="2260" height="1116" alt="Screenshot 2025-10-30 at 19 17 29" src="https://github.com/user-attachments/assets/6dba61b2-4d59-4720-87f1-a61f7babe6d1" />
-
 This repo provides aws configuration and a bun script deployed to several EC2 t4g.nano instances across  different regions. (see [aws-ec2.md](aws-ec2.md))
 
 The goal was to test whether HTTP requests to a shared cloudflare tunnel will automatically select the closest origin. Wording in the [documentation](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/get-started/tunnel-useful-terms/#replica) suggests that there may be different strategies for how the "replica" is selected.
@@ -79,7 +77,7 @@ To run with watch:
 bun run dev
 ```
 
-## AWS cost conntrol
+## AWS cost control
 To keep costs low, this experiment uses type t4g.nano ARM64 VMs running Linux. Inbound HTTP requests and SSH admin connections are routed through a Cloudflare tunnel. Since the cloudflared daemon can be configured to use outbound ipv6 connections, no public ipv4 address or NAT is required, further reducing costs.
 
 ## Network complexity

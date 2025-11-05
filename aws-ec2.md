@@ -12,12 +12,12 @@ The steps below are repeated for each region. Select a region in the [AWS EC2 co
 Sharing the same subnets for both ipv4 and ipv6, makes it easy to start with an ipv4 setup e.g. to install bun from github releases (which doesn't work over ipv6), and subsequently disable the public ipv4 address to save costs.
 
 ### Launch the new EC2 instance
-- Select architecture `64 bit (Arm)` with default Amazon Linux AMI
-- Select instance type `t4g.nano` (graviton, 1/2 GB RAM)
-- Select the keypair as configured earlier
-- Select the VPC
-- Enable auto-assigned public ipv4 and ipv6 addresses
-- Create a new security group with ssh inbound access enabled
+- Select architecture `64 bit (Arm)` with default Amazon Linux AMI.
+- Select instance type `t4g.nano` (graviton, 1/2 GB RAM).
+- Select the keypair as configured earlier.
+- Edit network settings to select a subnet and auto-assign public ipv4 and ipv6 addresses.
+- Create a new security group with ssh inbound ipv4 access enabled.
+- Select 'Spot instances' purchasing option under advanced details.
 
 ### Configure ssh access
 ```sh
@@ -38,7 +38,7 @@ https://grok.com/share/bGVnYWN5_9973b0e0-a223-40a8-b316-05a8c63fc3ee
 infocmp -x xterm-ghostty | ssh -i $EC2_KEY $EC2_USER@$EC2_HOST -- tic -x -
 ```
 ### Create new tunnel
-Create a new instance-specific tunnel in the Cloudflare dashboard. The steps below are copied from the instructions in the dashboard
+Create a new instance-specific tunnel in the Cloudflare dashboard. The steps below are copied from the instructions for the "Red Hat" OS environment in the dashboard
 
 ```sh
 # install cloudflared
@@ -75,7 +75,11 @@ EOF
 
 sudo systemctl daemon-reload
 sudo systemctl restart cloudflared.service
+sudo journalctl -u cloudflared.service -f
 ```
+
+### Add a domain name for the tunnel
+Add a published application route mapping the new hostname to http://localhost:8000
 
 ### install 2nd shared tunnel (geo-routed?)
 Add a new `cloudflared-geo` sysmtemd service unit for the 2nd tunnel in `/etc/systemd/system/`.
@@ -176,16 +180,19 @@ sudo journalctl -u bun.service -f
 sudo systemctl restart bun.service
 ```
 
+### Test the service
+Your browser should now show something like `Hello from http://tokyo-1.jldec.me`.
+
 ### Turn off ipv4
-The toggle for this is inside the network interface settings for the instance.
+Look for the toggle to turn off "Auto-assign public IP" in the "Manage IP addresses" action.
 Make a note of the ipv6 address for the instance.
 
 ### Add ipv6 CIDR route for the tunnel
 Add the ipv6 address from above to the tunnel CIDR routes. The `/128` will be added automatically.
 
 ### Add ipv6 CIDR route to the WARP profile
-Add the same address as a CIDR range to your WARP provile's split tunnel config.
-This will make the ipv6 address reachable from devices running the WARP 
+Add the same address as a CIDR range to your WARP profile's split tunnel config and save the profile.
+This will make the ipv6 address reachable from devices running WARP.
 
 ## add ipv6 Host to .ssh/config
 Finally add the ipv6 as a hostname to your .ssh/config file. E.g. to enable `ssh dublin-2`:
