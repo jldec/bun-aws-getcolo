@@ -15,7 +15,7 @@ Bun.serve({
       // Check if valid DNS hostname: RFC 1123, no dots, 1-63 chars, alphanum or hyphen, not start/end with hyphen
       // This also catches requests for favicon etc.
       if (!/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$/.test(coloName)) throw new Error(`Invalid colo hostname ${coloName}`)
-      return await getColo(coloName)
+      return await getColo(coloName, url.search)
     } catch (e) {
       console.log(`400 ${e}`)
       return new Response(`${e}`, { status: 400 })
@@ -35,8 +35,8 @@ console.log(`Bun running on http://localhost:${PORT}`)
  *
  * @param coloName - subdomain of jldec.me to query
  */
-async function getColo(coloName: string): Promise<Response> {
-  const url = `https://${coloName}.jldec.me/getcolo`
+async function getColo(coloName: string, search: string = ''): Promise<Response> {
+  const url = `https://${coloName}.jldec.me/getcolo${search}`
   const start = Date.now()
   let resp: Response | undefined
   try {
