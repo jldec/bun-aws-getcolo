@@ -17,7 +17,12 @@ Sharing the same subnets for both ipv4 and ipv6, makes it easy to start with an 
 - Select the keypair as configured earlier.
 - Edit network settings to select a subnet and auto-assign public ipv4 and ipv6 addresses.
 - Create a new security group with ssh inbound ipv4 access enabled.
-- Under advanced details select the 'Spot instances' purchasing option, with 'Persistent' request type, and 'Stop' interruption behavior.
+
+> [!NOTE]
+> Spot instances don't preserve network settings (private IP etc.) without additional config (share eni etc.)
+> This makes it quite difficult to use spot instances with Cloudflare tunnels and CIDR routing for Warp.
+> Additional research required.
+> ~~Under advanced details select the 'Spot instances' purchasing option, with 'Persistent' request type, and 'Stop' interruption behavior.~~
 
 ### Configure a new ssh host
 Example from .ssh/config
