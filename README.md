@@ -13,17 +13,17 @@ This experiment depends on Cloudflare workers anycast routing to call a worker i
 Each instance is running 2 cloudflared tunnels, making the instance reachable in 2 ways:
 
 1. Instance-specific tunnel at `https://<instance-name>.jldec.me`
-2. Shared tunnel at `https://geo.jldec.me`
+2. Shared tunnel at `https://aws-shared.jldec.me`
 
-Requests to an instance-specific endpoint trigger the bun script on that instance. The URL path determines whether the script calls getcolo directly, or via another instance tunnel, or via the geo tunnel.
+Requests to an instance-specific endpoint trigger the bun script on that instance. The URL path determines whether the script calls getcolo directly, or via another instance tunnel, or via the shared tunnel.
 
 - `https://<instance-name-1>.jldec.me/getcolo` - calls getcolo directly
 - `https://<instance-name-1>.jldec.me/<instance-name-2>` - calls getcolo on `<instance-name-2>`
-- `https://<instance-name-1>.jldec.me/geo` - calls getcolo via the geo tunnel
+- `https://<instance-name-1>.jldec.me/aws-shared` - calls getcolo via the shared tunnel
 
 ## Examples
 
-https://dublin-1.jldec.me/getcolo - reliably shows the colo details for the dublin region
+https://aws-euwest-1c.jldec.me/getcolo - reliably shows the colo details for the dublin region
 ```json
 {
   "colo": "DUB",
@@ -32,37 +32,37 @@ https://dublin-1.jldec.me/getcolo - reliably shows the colo details for the dubl
   "country": "IE",
   "continent": "EU",
   "getcolo": "https://getcolo.jldec.me/getcolo",
-  "getcoloFetchTime": 6
+  "getcoloFetchTime": 5
 }
 ```
 
-https://dublin-1.jldec.me/geo - geo targeting is not predictable
+https://aws-euwest-1c.jldec.me/aws-shared - shared targeting is not predictable
 ```json
 {
-  "colo": "NRT",
-  "city": "Tokyo",
-  "region": "Tokyo",
-  "country": "JP",
-  "continent": "AS",
+  "colo": "IAD",
+  "city": "Ashburn",
+  "region": "Virginia",
+  "country": "US",
+  "continent": "NA",
   "getcolo": "https://getcolo.jldec.me/getcolo",
-  "getcoloFetchTime": 12,
-  "geo": "https://geo.jldec.me/getcolo",
-  "geoFetchTime": 273
+  "getcoloFetchTime": 7,
+  "aws-shared": "https://aws-shared.jldec.me/getcolo",
+  "aws-sharedFetchTime": 104
 }
 ```
 
-https://tokyo-1.jldec.me/geo - In other locations geo targeting behaves more predictably (sometimes)
+https://aws-useast-1b.jldec.me/aws-shared - In other locations shared targeting seems more predictable (sometimes) but this could be illusory.
 ```json
 {
-  "colo": "NRT",
-  "city": "Tokyo",
-  "region": "Tokyo",
-  "country": "JP",
-  "continent": "AS",
+  "colo": "IAD",
+  "city": "Ashburn",
+  "region": "Virginia",
+  "country": "US",
+  "continent": "NA",
   "getcolo": "https://getcolo.jldec.me/getcolo",
-  "getcoloFetchTime": 8,
-  "geo": "https://geo.jldec.me/getcolo",
-  "geoFetchTime": 56
+  "getcoloFetchTime": 9,
+  "aws-shared": "https://aws-shared.jldec.me/getcolo",
+  "aws-sharedFetchTime": 20
 }
 ```
 
