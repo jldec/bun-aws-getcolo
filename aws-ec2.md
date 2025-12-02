@@ -27,22 +27,22 @@ Sharing the same subnets for both ipv4 and ipv6, makes it easy to start with an 
 ### Configure a new ssh host
 Example from .ssh/config
 ```sh
-Host useast-2
-    HostName ec2-3-145-49-221.us-east-2.compute.amazonaws.com
+Host euwest-1c
+    HostName ec2-54-161-125-45.compute-1.amazonaws.com
     User ec2-user
     IdentityFile ~/.ssh/jldec-aws-eu.pem
 ```
 
 ### Test ssh
 ```sh
-ssh useast-2
+ssh euwest-1c
 ```
 
 ### Push xterm-ghostty terminfo
 If you use ghostty, configure terminfo on the host
 
 ```sh
-infocmp -x xterm-ghostty | ssh useast-2 -- tic -x -
+infocmp -x xterm-ghostty | ssh euwest-1c -- tic -x -
 ```
 
 ### Create new tunnel
@@ -89,14 +89,14 @@ sudo journalctl -u cloudflared.service -f
 ### Add a domain name for the tunnel
 Add a published application route mapping the new hostname to http://localhost:8000
 
-### install 2nd shared tunnel (geo-routed?)
-Add a new `cloudflared-geo` sysmtemd service unit for the 2nd tunnel in `/etc/systemd/system/`.
-Fix the `<token>` below using geo tunnel token from cloudflare dashboard.
+### install 2nd aws-shared tunnel
+Add a new `cloudflared-shared` sysmtemd service unit for the 2nd tunnel in `/etc/systemd/system/`.
+Fix the `<token>` below using the aws-shared tunnel token from cloudflare dashboard.
 
 ```sh
-sudo tee /etc/systemd/system/cloudflared-geo.service > /dev/null <<'EOF'
+sudo tee /etc/systemd/system/cloudflared-shared.service > /dev/null <<'EOF'
 [Unit]
-Description=cloudflared geo-routed
+Description=cloudflared shared
 After=network-online.target
 Wants=network-online.target
 
@@ -115,18 +115,18 @@ EOF
 sudo systemctl daemon-reload
 
 # enable on boot
-sudo systemctl enable cloudflared-geo.service
+sudo systemctl enable cloudflared-shared.service
 
 # start now
-sudo systemctl start cloudflared-geo.service
+sudo systemctl start cloudflared-shared.service
 
 # tail logs
-sudo journalctl -u cloudflared-geo.service -f
+sudo journalctl -u cloudflared-shared.service -f
 
 # to remove
-sudo systemctl stop cloudflared-geo.service
-sudo systemctl disable cloudflared-geo.service
-sudo rm /etc/systemd/system/cloudflared-geo.service
+sudo systemctl stop cloudflared-shared.service
+sudo systemctl disable cloudflared-shared.service
+sudo rm /etc/systemd/system/cloudflared-shared.service
 sudo systemctl daemon-reload
 ```
 
@@ -145,8 +145,8 @@ cd /opt/bun
 
 ```sh
 # install as service after copying index.ts
-scp index.ts useast-2:/opt/bun/index.ts
-ssh useast-2 "chmod +x /opt/bun/index.ts"
+scp index.ts euwest-1c:/opt/bun/index.ts
+ssh euwest-1c "chmod +x /opt/bun/index.ts"
 ```
 
 ```sh
@@ -189,7 +189,7 @@ sudo systemctl restart bun.service
 ```
 
 ### Test the service
-Your browser should now show something like `Hello from http://tokyo-1.jldec.me`.
+Your browser should now show something like `Hello from http://aws-euwest-1c.jldec.me`.
 
 ### Turn off ipv4
 Look for the toggle to turn off 'Auto-assign public IP' in the 'Manage IP addresses' action.
